@@ -22,6 +22,26 @@ class HeightMap:
 
         data = [[0] * self.size["cols"]] * self.size["rows"]
 
+        # read the file into data
+        with open(filepath, "rb") as binMapFile:
+            curRow = 0
+            curCol = 0
+
+            while True:
+                in_byte = binMapFile.read(1)
+                if not in_byte:
+                    break
+
+                heightValue = in_byte[0]
+                data[curRow][curCol] = heightValue
+
+                # handle moving the current location across the 2d array
+                if curCol >= self.size["cols"]-1:
+                    curCol = 0
+                    curRow = curRow + 1
+                else:
+                    curCol = curCol + 1
+
         return data
 
 
