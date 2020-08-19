@@ -17,22 +17,13 @@ def getPointAlongLine(fromPoint, toPoint, t):
     )
 
 def euclideanDistance (startPoint, endPoint):
-    return np.linalg.norm(endPoint.toNPArray()-startPoint.toNPArray())
+    return np.linalg.norm(endPoint.to2DNPArray()-startPoint.to2DNPArray())
 
 class Point:
     def __init__(self, r, c, z=0):
         self.row = r
         self.col = c
         self.z = z
-
-    def offset(self, ro, co):
-        self.row += ro
-        self.col += co
-        return self
-
-    def setZ (self, z):
-        self.z = z
-        return self
 
     def to2DArray(self):
         return [self.col, self.row]
@@ -44,7 +35,7 @@ class Point:
         return np.array(self.to2DArray())
 
     def __str__(self):
-        return ",".join(self.to3DArray())
+        return ",".join([str(v) for v in self.to3DArray()])
 
 class HeightMap:
     def __init__ (self, mapfilepath):
@@ -63,30 +54,30 @@ class HeightMap:
         return self.data[point.row][point.col]
 
     def getWorldSpacePoint (self, gridSpacePoint):
-        floorPoint = Point(
-            r = floor(gridSpacePoint.row),
-            c = floor(gridSpacePoint.col),
-        )
+        tlr = floor(gridSpacePoint.row)
+        tlc = floor(gridSpacePoint.col)
 
         gridQuad = [
             # tl, tr, bl, br
-            floorPoint.setZ(self.getValue(floorPoint)),
-            floorPoint.offset(0,1).setZ(self.getValue(floorPoint)),
-            floorPoint.offset(1,0).setZ(self.getValue(floorPoint)),
-            floorPoint.offset(1,1).setZ(self.getValue(floorPoint))
+            Point(r=tlr, c=tlc),
+            Point(r=tlr, c=tlc+1),
+            Point(r=tlr+1, c=tlc),
+            Point(r=tlr+1, c=tlc+1)
         ]
 
         heightFunc = interpolate.interp2d(
             [v.col for v in gridQuad],
             [v.row for v in gridQuad],
-            [v.z for v in gridQuad],
-            kind="cubic"
+            [self.getValue(v) for v in gridQuad],
+            kind="linear"
         )
 
+        newHeight = heightFunc(*gridSpacePoint.to2DArray())[0]
+
         return Point(
-            r = gridSpacePoint.row * self.resolution["horizontal"],
-            c = gridSpacePoint.col * self.resolution["horizontal"],
-            z = heightFunc(*gridSpacePoint.to2DArray()) * self.resolution["vertical"]
+            r = gridSpacePoint.row,
+            c = gridSpacePoint.col,
+            z = newHeight
         )
 
     def saveAsPNG (self, outfilename):
@@ -118,9 +109,9 @@ class HeightMap:
                 # handle moving the current location across the 2d array
                 if curPoint.col >= self.size["cols"]-1:
                     curPoint.col = 0
-                    curPoint.offset(1,0)
+                    curPoint.row += 1
                 else:
-                    curPoint.offset(0,1)
+                    curPoint.col += 1
 
         return data
 
@@ -132,13 +123,14 @@ def calculateTravelDistance(heightMap, fromPoint, toPoint):
 
     # I want to start from the beginning of the line
     # and sample the heights across it 
-    NUM_SAMPLES = 100000
+    NUM_SAMPLES = 5
     for i in range(1, NUM_SAMPLES+1):
         t = i/float(NUM_SAMPLES)
 
         sampledPoint = getPointAlongLine(fromPoint, toPoint, t)
         worldSpaceSampledPoint = heightMap.getWorldSpacePoint(sampledPoint)
 
+        print(sampledPoint, worldSpaceSampledPoint)
         totalDistance += euclideanDistance(
             sampledPoint,
             previousPoint
@@ -151,13 +143,16 @@ def calculateTravelDistance(heightMap, fromPoint, toPoint):
 
 
 
-startPoint = Point(r=0, c=0)
-endPoint = Point(r=1, c=1)
+startPoint = Point(r=36, c=0)
+endPoint = Point(r=39, c=1)
 
 preExplosion = HeightMap("pre.data")
 postExplosion = HeightMap("post.data")
 
+print(preExplosion.getValue(startPoint))
+print(preExplosion.getValue(endPoint))
 preDistance = calculateTravelDistance(preExplosion, startPoint, endPoint)
-postDistance = calculateTravelDistance(postExplosion, startPoint, endPoint)
+#postDistance = calculateTravelDistance(postExplosion, startPoint, endPoint)
 
-print(postDistance - preDistance)
+print(preDistance)
+# print(postDistance - preDistance)
