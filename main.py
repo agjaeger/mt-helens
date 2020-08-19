@@ -86,7 +86,7 @@ class HeightMap:
         return Point(
             r = gridSpacePoint.row * self.resolution["horizontal"],
             c = gridSpacePoint.col * self.resolution["horizontal"],
-            z = heightFunc(*gridSpacePoint.to2DArray())
+            z = heightFunc(*gridSpacePoint.to2DArray()) * self.resolution["vertical"]
         )
 
     def saveAsPNG (self, outfilename):
