@@ -49,13 +49,34 @@ class HeightMap:
 
         return data
 
+def lerp (start, end, t):
+    return (1-t) * start + t * end
+
+def getPointAlongLine(fromPoint, toPoint, t):
+    return [
+        lerp(fromPoint[0], toPoint[0], t),
+        lerp(fromPoint[1], toPoint[1], t)
+    ]
+
+def calculateTravelDistance(heightMap, fromPoint, toPoint):
+    pass
+
+startPoint = [0, 0]
+endPoint = [10, 0]
+
+
+print(getPointAlongLine(startPoint, endPoint, 0))
+print(getPointAlongLine(startPoint, endPoint, 0.25))
+print(getPointAlongLine(startPoint, endPoint, 0.5))
+print(getPointAlongLine(startPoint, endPoint, 0.75))
+print(getPointAlongLine(startPoint, endPoint, 1))
 
 preExplosion = HeightMap("pre.data")
-postExplosion = HeightMap("pre.data")
+postExplosion = HeightMap("post.data")
 
 
 preExplosion.saveAsPNG("parsed-pre.png")
-print(preExplosion.getValue(0,0), preExplosion.getValue(511, 511))
+postExplosion.saveAsPNG("parsed-post.png")
 
 
 
