@@ -59,24 +59,23 @@ def getPointAlongLine(fromPoint, toPoint, t):
     ]
 
 def calculateTravelDistance(heightMap, fromPoint, toPoint):
-    pass
+    previousPoint = fromPoint
+    # I want to start from the beginning of the line
+    # and sample the heights across it 
+    NUM_SAMPLES = 100000
+    for i in range(1,NUM_SAMPLES+1):
+        t = i/float(NUM_SAMPLES)
+        sampledPoint = getPointAlongLine(fromPoint, toPoint, t)
 
-startPoint = [0, 0]
-endPoint = [10, 0]
+        print(sampledPoint)
 
+    return None
 
-print(getPointAlongLine(startPoint, endPoint, 0))
-print(getPointAlongLine(startPoint, endPoint, 0.25))
-print(getPointAlongLine(startPoint, endPoint, 0.5))
-print(getPointAlongLine(startPoint, endPoint, 0.75))
-print(getPointAlongLine(startPoint, endPoint, 1))
+startPoint = [100, 0]
+endPoint = [500, 0]
 
 preExplosion = HeightMap("pre.data")
 postExplosion = HeightMap("post.data")
 
-
-preExplosion.saveAsPNG("parsed-pre.png")
-postExplosion.saveAsPNG("parsed-post.png")
-
-
-
+print(calculateTravelDistance(preExplosion, startPoint, endPoint))
+print(calculateTravelDistance(postExplosion, startPoint, endPoint))
