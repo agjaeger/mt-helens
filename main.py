@@ -8,6 +8,11 @@ class HeightMap:
             "rows": 512,
             "cols": 512
         }
+        self.resolution = {
+            "horizontal": 30,
+            "vertical": 11
+        }
+
         self.data = self._loadMapFile(mapfilepath)
 
     def getValue (self, r, c):
@@ -58,7 +63,15 @@ def getPointAlongLine(fromPoint, toPoint, t):
         lerp(fromPoint[1], toPoint[1], t)
     ]
 
+def euclideanDistance (startPoint, endPoint):
+    return np.linalg.norm(np.array(endPoint)-np.array(startPoint))
+
+def gridSpaceToWorldSpace(heightMap, gridPoint2D):
+    return point * heightMap.resolution.horizontal
+
 def calculateTravelDistance(heightMap, fromPoint, toPoint):
+    totalDistance = 0
+
     previousPoint = fromPoint
     # I want to start from the beginning of the line
     # and sample the heights across it 
@@ -67,9 +80,14 @@ def calculateTravelDistance(heightMap, fromPoint, toPoint):
         t = i/float(NUM_SAMPLES)
         sampledPoint = getPointAlongLine(fromPoint, toPoint, t)
 
-        print(sampledPoint)
+        totalDistance += euclideanDistance(
+            sampledPoint,
+            previousPoint
+        )
 
-    return None
+        previousPoint = sampledPoint
+
+    return totalDistance
 
 startPoint = [100, 0]
 endPoint = [500, 0]
@@ -78,4 +96,4 @@ preExplosion = HeightMap("pre.data")
 postExplosion = HeightMap("post.data")
 
 print(calculateTravelDistance(preExplosion, startPoint, endPoint))
-print(calculateTravelDistance(postExplosion, startPoint, endPoint))
+print(euclideanDistance(startPoint, endPoint))
