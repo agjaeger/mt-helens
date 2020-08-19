@@ -75,9 +75,9 @@ class HeightMap:
         newHeight = heightFunc(*gridSpacePoint.to2DArray())[0]
 
         return Point(
-            r = gridSpacePoint.row,
-            c = gridSpacePoint.col,
-            z = newHeight
+            r = gridSpacePoint.row * self.resolution["horizontal"],
+            c = gridSpacePoint.col * self.resolution["horizontal"],
+            z = newHeight * self.resolution["vertical"]
         )
 
     def saveAsPNG (self, outfilename):
@@ -118,19 +118,17 @@ class HeightMap:
 
 def calculateTravelDistance(heightMap, fromPoint, toPoint):
     totalDistance = 0
-
     previousPoint = heightMap.getWorldSpacePoint(fromPoint)
 
     # I want to start from the beginning of the line
     # and sample the heights across it 
-    NUM_SAMPLES = 5
+    NUM_SAMPLES = 10000
     for i in range(1, NUM_SAMPLES+1):
         t = i/float(NUM_SAMPLES)
 
         sampledPoint = getPointAlongLine(fromPoint, toPoint, t)
         worldSpaceSampledPoint = heightMap.getWorldSpacePoint(sampledPoint)
 
-        print(sampledPoint, worldSpaceSampledPoint)
         totalDistance += euclideanDistance(
             sampledPoint,
             previousPoint
@@ -141,18 +139,14 @@ def calculateTravelDistance(heightMap, fromPoint, toPoint):
     return totalDistance
 
 
-
-
-startPoint = Point(r=36, c=0)
-endPoint = Point(r=39, c=1)
+startPoint = Point(r=304, c=180)
+endPoint = Point(r=304, c=320)
 
 preExplosion = HeightMap("pre.data")
 postExplosion = HeightMap("post.data")
 
-print(preExplosion.getValue(startPoint))
-print(preExplosion.getValue(endPoint))
 preDistance = calculateTravelDistance(preExplosion, startPoint, endPoint)
-#postDistance = calculateTravelDistance(postExplosion, startPoint, endPoint)
+postDistance = calculateTravelDistance(postExplosion, startPoint, endPoint)
 
 print(preDistance)
-# print(postDistance - preDistance)
+print(postDistance)
