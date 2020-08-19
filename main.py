@@ -1,5 +1,6 @@
 
-
+import numpy as np
+from PIL import Image
 
 class HeightMap:
     def __init__ (self, mapfilepath):
@@ -12,6 +13,10 @@ class HeightMap:
     def getValue (self, r, c):
         return self.data[r][c]
 
+    def saveAsPNG (self, outfilename):
+        im = Image.fromarray(self.data, "L")
+        im.save(outfilename)
+
     def _loadMapFile (self, filepath):
         """
             File Format
@@ -20,7 +25,7 @@ class HeightMap:
                 - The pixels are stored in row major order
         """
 
-        data = [[0] * self.size["cols"]] * self.size["rows"]
+        data = np.zeros((self.size["rows"], self.size["cols"]), dtype=np.uint8)
 
         # read the file into data
         with open(filepath, "rb") as binMapFile:
@@ -33,7 +38,7 @@ class HeightMap:
                     break
 
                 heightValue = in_byte[0]
-                data[curRow][curCol] = heightValue
+                data[curRow, curCol] = heightValue
 
                 # handle moving the current location across the 2d array
                 if curCol >= self.size["cols"]-1:
@@ -49,4 +54,8 @@ preExplosion = HeightMap("pre.data")
 postExplosion = HeightMap("pre.data")
 
 
+preExplosion.saveAsPNG("parsed-pre.png")
 print(preExplosion.getValue(0,0), preExplosion.getValue(511, 511))
+
+
+
