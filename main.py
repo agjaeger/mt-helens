@@ -3,6 +3,7 @@
 from math import floor
 
 # external modules
+from scipy import interpolate
 import numpy as np
 from PIL import Image
 
@@ -17,9 +18,6 @@ def getPointAlongLine(fromPoint, toPoint, t):
 
 def euclideanDistance (startPoint, endPoint):
     return np.linalg.norm(endPoint.toNPArray()-startPoint.toNPArray())
-
-def gridSpaceToWorldSpace(heightMap, gridPoint2D):
-    return point * heightMap.resolution.horizontal
 
 class Point:
     def __init__(self, r, c, z=0):
@@ -36,11 +34,17 @@ class Point:
         self.z = z
         return self
 
-    def toNPArray(self):
-        return np.array([self.col, self.row])
+    def to2DArray(self):
+        return [self.col, self.row]
+
+    def to3DArray(self):
+        return [self.col, self.row, self.z]
+
+    def to2DNPArray(self):
+        return np.array(self.to2DArray())
 
     def __str__(self):
-        return ",".join([self.col, self.row])
+        return ",".join(self.to3DArray())
 
 class HeightMap:
     def __init__ (self, mapfilepath):
@@ -59,34 +63,31 @@ class HeightMap:
         return self.data[point.row][point.col]
 
     def getWorldSpacePoint (self, gridSpacePoint):
-        # most important, we need to find the height
-        # this is a bit complicated because the gridSpacePoint may not lie
-        # on grid intersections
-
         floorPoint = Point(
             r = floor(gridSpacePoint.row),
             c = floor(gridSpacePoint.col),
         )
 
-        gridQuad = {
-            "topleft": floorPoint.setZ(self.getValue(floorPoint)),
-            "topright": floorPoint.offset(0,1).setZ(self.getValue(floorPoint)),
-            "bottomleft": floorPoint.offset(1,0).setZ(self.getValue(floorPoint)),
-            "bottomright": floorPoint.offset(1,1).setZ(self.getValue(floorPoint))
-        }
+        gridQuad = [
+            # tl, tr, bl, br
+            floorPoint.setZ(self.getValue(floorPoint)),
+            floorPoint.offset(0,1).setZ(self.getValue(floorPoint)),
+            floorPoint.offset(1,0).setZ(self.getValue(floorPoint)),
+            floorPoint.offset(1,1).setZ(self.getValue(floorPoint))
+        ]
 
-        # quad interpolation
-        # from http://www.reedbeta.com/blog/quadrilateral-interpolation-part-1/
-        distancesFromGridQuad = {
-            "topleft": euclideanDistance(gridSpacePoint, gridQuad["topleft"]),
-            "topright": euclideanDistance(gridSpacePoint, gridQuad["topright"]),
-            "bottomleft": euclideanDistance(gridSpacePoint, gridQuad["bottomleft"]),
-            "bottomright": euclideanDistance(gridSpacePoint, gridQuad["bottomright"])
-        }
+        heightFunc = interpolate.interp2d(
+            [v.col for v in gridQuad],
+            [v.row for v in gridQuad],
+            [v.z for v in gridQuad],
+            kind="cubic"
+        )
 
-        print(distancesFromGridQuad)
-
-        return floorPoint
+        return Point(
+            r = gridSpacePoint.row * self.resolution["horizontal"],
+            c = gridSpacePoint.col * self.resolution["horizontal"],
+            z = heightFunc(*gridSpacePoint.to2DArray())
+        )
 
     def saveAsPNG (self, outfilename):
         im = Image.fromarray(self.data, "L")
@@ -147,12 +148,16 @@ def calculateTravelDistance(heightMap, fromPoint, toPoint):
 
     return totalDistance
 
-# [rows, cols]
-startPoint = Point(r=100, c=0)
-endPoint = Point(r=500, c=0)
+
+
+
+startPoint = Point(r=0, c=0)
+endPoint = Point(r=1, c=1)
 
 preExplosion = HeightMap("pre.data")
 postExplosion = HeightMap("post.data")
 
-print(calculateTravelDistance(preExplosion, startPoint, endPoint))
-print(euclideanDistance(startPoint, endPoint))
+preDistance = calculateTravelDistance(preExplosion, startPoint, endPoint)
+postDistance = calculateTravelDistance(postExplosion, startPoint, endPoint)
+
+print(postDistance - preDistance)
